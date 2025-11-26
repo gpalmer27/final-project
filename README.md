@@ -1,4 +1,3 @@
-
 # 1. Creating and running the project
 - Download the zip file and open a terminal and cd into wherever you downloaded the folder (no specific directory needed)
 - In a separate application, open MySQLWorkbench (https://dev.mysql.com/downloads/workbench/) and open the sql file provided
