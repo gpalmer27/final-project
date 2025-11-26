@@ -65,7 +65,9 @@ def create_new_gym(connection):
             cursor.callproc('create_gym', (gym_name, street, city, state, zip_code, phone, email, hours, 0))
             connection.commit()
             print(f"Gym '{gym_name}' created successfully!")
-            return None
+            cursor.execute("SELECT @_create_gym_8")  # OUT variable index = last parameter
+            gym_id = cursor.fetchone()['@_create_gym_8']
+            return gym_id
     except pymysql.Error as e:
         print(f"Error creating gym: {e}")
         connection.rollback()
@@ -88,6 +90,7 @@ def register_fighter(connection):
             response = input(f"Gym '{gym_name}' not found. Would you like to create it? (yes/no): ").lower()
             if response == 'yes':
                 gym_id = create_new_gym(connection)
+                break
             else:
                 gym_name = input("Enter a different gym name: ")
                 gym_id = gym_exists(connection, gym_name)
@@ -246,7 +249,7 @@ def sign_up_membership(connection, fighter_id, gym_id):
         print(f"Error signing up for membership: {e}")
         connection.rollback()
 
-def join_fight(connection, fighter_id):
+def join_fight(connection, fighter_id, budget):
     """Simulate a fight with a random game."""
     location = input("Enter fight location: ")
     print("\n--- Fight Simulation ---")
@@ -294,6 +297,7 @@ def join_fight(connection, fighter_id):
             try:
                 cursor.callproc('update_budget', [fighter_id, amount_change])
                 connection.commit()
+                print(f"\nYou now have ${amount_change + budget}")
             except pymysql.Error as e:
                 print(f"Transaction failed: {e}")
                 connection.rollback()
@@ -356,6 +360,7 @@ def first_option(connection):
     if fighter is None:
         print("Fighter not found. Let's register you!")
         fighter_id, budget = register_fighter(connection)
+        fighter = get_fighter_by_email(connection, email)
         if fighter_id is None:
             return
     else:
@@ -388,7 +393,7 @@ def first_option(connection):
         elif choice == '4':
             cancel_membership(connection, fighter_id)
         elif choice == '5':
-            join_fight(connection, fighter_id)
+            join_fight(connection, fighter_id, budget)
         elif choice == '6':
             check_in_training(connection, fighter_id)
         elif choice == '7':
